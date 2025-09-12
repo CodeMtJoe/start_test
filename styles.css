@@ -12,14 +12,16 @@ body {
     color: #333;
     margin: 0;
     padding: 0;
+    overflow-y: auto; /* 允许页面级别的垂直滚动 */
 }
-
-
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 40px); /* 减去上下内边距 */
 }
 
 /* 头部样式 */
@@ -304,6 +306,10 @@ body {
     padding: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     border: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+    min-height: 400px;
+    max-height: calc(100vh - 420px); /* 自适应视窗高度，减去头部和其他组件的高度 */
 }
 
 .list-header {
@@ -313,6 +319,7 @@ body {
     margin-bottom: 20px;
     flex-wrap: wrap;
     gap: 15px;
+    flex-shrink: 0; /* 防止头部被压缩 */
 }
 
 .select-all {
@@ -341,21 +348,49 @@ body {
 }
 
 .table-container {
-    overflow-x: auto;
+    overflow: auto; /* 启用滚动 */
     border-radius: 8px;
     border: 1px solid #e9ecef;
+    flex: 1; /* 占用剩余空间 */
+    min-height: 300px; /* 最小高度确保内容可见 */
+    /* 优化滚动条样式 */
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e0 #f7fafc;
+}
+
+/* Webkit浏览器滚动条样式 */
+.table-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f7fafc;
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
     background: white;
+    position: relative; /* 为粘性头部做准备 */
 }
 
 th, td {
     padding: 16px 12px;
     text-align: left;
     border-bottom: 1px solid #f1f3f4;
+    white-space: nowrap; /* 防止文本换行 */
 }
 
 th {
@@ -363,6 +398,10 @@ th {
     font-weight: 600;
     color: #2c3e50;
     font-size: 14px;
+    position: sticky; /* 粘性头部 */
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* 添加阴影增强分层感 */
 }
 
 tbody tr {
@@ -452,13 +491,17 @@ tbody tr:last-child td {
 
 .modal-content {
     background: white;
-    margin: 10% auto;
+    margin: 5% auto; /* 减小顶部间距，给更多空间 */
     padding: 0;
     border-radius: 15px;
     width: 90%;
     max-width: 500px;
+    max-height: 90vh; /* 限制最大高度为视窗的90% */
+    overflow-y: auto; /* 允许垂直滚动 */
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
     animation: modalSlideIn 0.3s ease;
+    display: flex;
+    flex-direction: column;
 }
 
 @keyframes modalSlideIn {
@@ -478,6 +521,7 @@ tbody tr:last-child td {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0; /* 防止头部被压缩 */
 }
 
 .modal-header h3 {
@@ -500,6 +544,9 @@ tbody tr:last-child td {
 
 .modal-body {
     padding: 25px;
+    flex: 1; /* 占用剩余空间 */
+    overflow-y: auto; /* 允许内容滚动 */
+    min-height: 0; /* 允许flex子项缩小 */
 }
 
 .modal-body input {
@@ -552,6 +599,7 @@ tbody tr:last-child td {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+    flex-shrink: 0; /* 防止底部被压缩 */
 }
 
 /* 导入模式选择样式 */
@@ -682,44 +730,63 @@ tbody tr:last-child td {
     margin-top: 15px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px; /* 增加间距 */
 }
 
 .transfer-options label {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px;
+    gap: 10px; /* 增加间距 */
+    padding: 12px; /* 增加内边距 */
     border: 1px solid #e9ecef;
-    border-radius: 6px;
+    border-radius: 8px; /* 增加圆角 */
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
+    line-height: 1.4; /* 改善文本行高 */
 }
 
 .transfer-options label:hover {
     background-color: #f8f9fa;
+    border-color: #3498db;
 }
 
 .transfer-options input[type="radio"] {
     margin: 0;
+    min-width: 16px; /* 确保单选按钮有固定宽度 */
 }
 
 .danger-text {
     color: #dc3545;
     font-weight: 500;
+    font-size: 14px;
+}
+
+#studentTransferSection {
+    margin-top: 20px;
 }
 
 #studentTransferSection label {
     margin-bottom: 10px;
+    font-weight: 600;
+    color: #4a5568;
+    display: block;
 }
 
 #transferTargetClass {
     width: 100%;
-    padding: 10px 15px;
+    padding: 12px 15px;
     border: 1px solid #e9ecef;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 14px;
-    margin-bottom: 15px;
+    margin-bottom: 20px; /* 增加与下方选项的间距 */
+    background: white;
+    transition: border-color 0.2s ease;
+}
+
+#transferTargetClass:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
 }
 
 /* 空状态 */
@@ -727,6 +794,11 @@ tbody tr:last-child td {
     text-align: center;
     padding: 60px 20px;
     color: #a0aec0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px; /* 确保在滚动容器中有足够的高度 */
 }
 
 .empty-state i {
@@ -785,6 +857,7 @@ tbody tr:last-child td {
 @media (max-width: 768px) {
     .container {
         padding: 15px;
+        min-height: calc(100vh - 30px);
     }
     
     .header {
@@ -819,8 +892,18 @@ tbody tr:last-child td {
         align-items: flex-start;
     }
     
+    .student-list {
+        max-height: calc(100vh - 500px); /* 移动端调整高度 */
+        min-height: 300px;
+    }
+    
     .table-container {
         font-size: 14px;
+        min-height: 250px;
+    }
+    
+    th, td {
+        padding: 12px 8px; /* 减少内边距节省空间 */
     }
     
     .action-buttons {
@@ -829,7 +912,27 @@ tbody tr:last-child td {
     
     .modal-content {
         width: 95%;
-        margin: 5% auto;
+        margin: 2% auto; /* 进一步减小边距 */
+        max-height: 96vh; /* 增加最大高度 */
+        overflow-y: auto;
+    }
+    
+    .modal-header {
+        padding: 15px 20px; /* 减小内边距 */
+    }
+    
+    .modal-body {
+        padding: 20px; /* 减小内边距 */
+    }
+    
+    .modal-footer {
+        padding: 15px 20px; /* 减小内边距 */
+        flex-wrap: wrap; /* 允许按钮换行 */
+    }
+    
+    .transfer-options label {
+        padding: 10px; /* 减小内边距 */
+        font-size: 14px;
     }
     
     .import-mode-options {
