@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星币管理系统</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部导航 -->
+        <header class="header">
+            <h1><i class="fas fa-star"></i> 星币管理系统</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="importExcel()">
+                    <i class="fas fa-file-excel"></i> 导入Excel
+                </button>
+                <button class="btn btn-secondary" onclick="exportExcel()">
+                    <i class="fas fa-file-excel"></i> 导出Excel
+                </button>
+                <button class="btn btn-secondary" onclick="downloadTemplate()">
+                    <i class="fas fa-download"></i> 下载模板
+                </button>
+            </div>
+        </header>
+
+        <!-- 统计卡片 -->
+        <div class="stats-cards">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-users"></i>
+                    <span>学生总数</span>
+                </div>
+                <div class="card-value" id="totalStudents">0</div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-crown"></i>
+                    <span>星币最多</span>
+                </div>
+                <div class="card-value" id="topStudent">暂无数据</div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-chart-line"></i>
+                    <span>平均星币</span>
+                </div>
+                <div class="card-value" id="avgCoins">0</div>
+            </div>
+        </div>
+
+        <!-- 班级管理区域 -->
+        <div class="class-management">
+            <div class="class-selector">
+                <label for="classSelect">当前班级：</label>
+                <select id="classSelect" onchange="switchClass()">
+                    <option value="">请选择班级</option>
+                </select>
+                <button class="btn btn-primary" onclick="showAddClassModal()">
+                    <i class="fas fa-plus"></i> 添加班级
+                </button>
+                <button class="btn btn-danger" onclick="showDeleteClassModal()" id="deleteClassBtn" disabled>
+                    <i class="fas fa-trash"></i> 删除班级
+                </button>
+            </div>
+        </div>
+
+        <!-- 学生操作区域 -->
+        <div class="student-operations">
+            <div class="add-student-form">
+                <input type="text" id="studentName" placeholder="学生姓名" maxlength="20">
+                <input type="number" id="initialCoins" placeholder="初始星币数量" value="0">
+                <button class="btn btn-success" onclick="addStudent()">
+                    <i class="fas fa-user-plus"></i> 添加学生
+                </button>
+            </div>
+            
+            <div class="batch-operations">
+                <button class="btn btn-info" onclick="batchAddCoins()">
+                    <i class="fas fa-plus-circle"></i> 全班加星币
+                </button>
+                <button class="btn btn-warning" onclick="batchSubtractCoins()">
+                    <i class="fas fa-minus-circle"></i> 全班减星币
+                </button>
+                <button class="btn btn-info" onclick="selectedAddCoins()" id="selectedAddBtn" disabled>
+                    <i class="fas fa-check-circle"></i> 选中加星币
+                </button>
+                <button class="btn btn-warning" onclick="selectedSubtractCoins()" id="selectedSubtractBtn" disabled>
+                    <i class="fas fa-times-circle"></i> 选中减星币
+                </button>
+            </div>
+        </div>
+
+        <!-- 搜索框 -->
+        <div class="search-area">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="搜索学生姓名..." oninput="searchStudents()">
+            </div>
+        </div>
+
+        <!-- 学生列表 -->
+        <div class="student-list">
+            <div class="list-header">
+                <div class="select-all">
+                    <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                    <label for="selectAll">全选</label>
+                </div>
+                <div class="sort-options">
+                    <label>排序：</label>
+                    <select id="sortBy" onchange="sortStudents()">
+                        <option value="name">按姓名</option>
+                        <option value="coins-desc">按星币(高到低)</option>
+                        <option value="coins-asc">按星币(低到高)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table id="studentsTable">
+                    <thead>
+                        <tr>
+                            <th width="50">选择</th>
+                            <th>姓名</th>
+                            <th>班级</th>
+                            <th>星币数量</th>
+                            <th width="300">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTableBody">
+                        <!-- 学生数据将在这里动态填充 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加班级模态框 -->
+    <div id="addClassModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>添加新班级</h3>
+                <span class="close" onclick="closeAddClassModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="newClassName" placeholder="请输入班级名称" maxlength="30">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddClassModal()">取消</button>
+                <button class="btn btn-primary" onclick="addClass()">确定添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑学生模态框 -->
+    <div id="editStudentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>编辑学生信息</h3>
+                <span class="close" onclick="closeEditStudentModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="editStudentName" placeholder="学生姓名" maxlength="20">
+                <select id="editStudentClass">
+                    <option value="">请选择班级</option>
+                </select>
+                <input type="number" id="editStudentCoins" placeholder="星币数量">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditStudentModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveStudentEdit()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量操作模态框 -->
+    <div id="batchModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="batchModalTitle">批量操作</h3>
+                <span class="close" onclick="closeBatchModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <label id="batchModalLabel">请输入星币数量（正数加分，负数减分）：</label>
+                <input type="number" id="batchCoinsInput" placeholder="星币数量" min="1" value="1">
+                <div id="batchTargetInfo" class="batch-info"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeBatchModal()">取消</button>
+                <button class="btn btn-primary" onclick="executeBatchOperation()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Excel导入模式选择模态框 -->
+    <div id="importModeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>选择导入模式</h3>
+                <span class="close" onclick="closeImportModeModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="import-mode-options">
+                    <div class="mode-option" onclick="selectImportMode('append')">
+                        <div class="mode-icon">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                        <div class="mode-info">
+                            <h4>追加模式</h4>
+                            <p>只添加新学生，保留现有学生数据</p>
+                            <span class="mode-tag safe">安全模式</span>
+                        </div>
+                    </div>
+                    <div class="mode-option" onclick="selectImportMode('replace')">
+                        <div class="mode-icon warning">
+                            <i class="fas fa-sync-alt"></i>
+                        </div>
+                        <div class="mode-info">
+                            <h4>覆盖模式</h4>
+                            <p>先清空当前班级所有学生，再导入新学生</p>
+                            <span class="mode-tag warning">谨慎使用</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="current-class-info">
+                    <i class="fas fa-info-circle"></i>
+                    <span>当前班级：<strong id="currentClassDisplay"></strong></span>
+                    <span>现有学生：<strong id="currentStudentCount"></strong> 人</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="cancelImportMode()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除班级模态框 -->
+    <div id="deleteClassModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>删除班级</h3>
+                <span class="close" onclick="closeDeleteClassModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="deleteClassWarning" class="delete-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h4 id="deleteWarningTitle">警告</h4>
+                    <p id="deleteWarningMessage">即将删除班级</p>
+                </div>
+                
+                <!-- 学生转移选项 -->
+                <div id="studentTransferSection" style="display: none;">
+                    <label for="transferTargetClass">选择目标班级（转移学生）：</label>
+                    <select id="transferTargetClass">
+                        <option value="">请选择目标班级</option>
+                    </select>
+                    <div class="transfer-options">
+                        <label>
+                            <input type="radio" name="deleteOption" value="transfer" checked>
+                            <span>转移学生到其他班级</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="deleteOption" value="force">
+                            <span class="danger-text">强制删除（同时删除所有学生）</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeDeleteClassModal()">取消</button>
+                <button class="btn btn-danger" onclick="executeDeleteClass()" id="confirmDeleteBtn">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 隐藏的文件输入 -->
+    <input type="file" id="excelFileInput" accept=".xlsx,.xls" style="display: none;" onchange="handleExcelImport(event)">
+
+    <script src="script.js"></script>
+</body>
+</html>
