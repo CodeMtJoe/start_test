@@ -308,8 +308,8 @@ body {
     border: 1px solid #e9ecef;
     display: flex;
     flex-direction: column;
-    min-height: 400px;
-    max-height: calc(100vh - 420px); /* 自适应视窗高度，减去头部和其他组件的高度 */
+    min-height: auto;
+    max-height: none; /* 去掉最大高度限制，让内容自适应 */
 }
 
 .list-header {
@@ -348,35 +348,28 @@ body {
 }
 
 .table-container {
-    overflow: auto; /* 启用滚动 */
+    overflow: visible; /* 去掉滚动 */
     border-radius: 8px;
     border: 1px solid #e9ecef;
     flex: 1; /* 占用剩余空间 */
-    min-height: 300px; /* 最小高度确保内容可见 */
-    /* 优化滚动条样式 */
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e0 #f7fafc;
+    min-height: auto; /* 去掉最小高度限制 */
+    /* 移除滚动条样式 */
+    scrollbar-width: none;
+    scrollbar-color: transparent transparent;
 }
 
-/* Webkit浏览器滚动条样式 */
+/* Webkit浏览器滚动条样式 - 隐藏滚动条 */
 .table-container::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 0;
+    height: 0;
 }
 
 .table-container::-webkit-scrollbar-track {
-    background: #f7fafc;
-    border-radius: 4px;
+    background: transparent;
 }
 
 .table-container::-webkit-scrollbar-thumb {
-    background: #cbd5e0;
-    border-radius: 4px;
-    transition: background 0.2s ease;
-}
-
-.table-container::-webkit-scrollbar-thumb:hover {
-    background: #a0aec0;
+    background: transparent;
 }
 
 table {
@@ -946,6 +939,72 @@ tbody tr:last-child td {
     }
 }
 
+/* 浮动操作栏样式 */
+.floating-actions {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.floating-actions.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.btn-floating {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 50px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.btn-floating:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn-floating:active {
+    transform: translateY(0);
+}
+
+.btn-floating i {
+    font-size: 16px;
+}
+
+.btn-floating .btn-text {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .floating-actions {
+        bottom: 15px;
+        right: 15px;
+    }
+    
+    .btn-floating {
+        padding: 10px 16px;
+    }
+    
+    .btn-floating .btn-text {
+        font-size: 13px;
+    }
+}
+
 /* 打印样式 */
 @media print {
     body {
@@ -955,7 +1014,8 @@ tbody tr:last-child td {
     .header-actions,
     .student-operations,
     .search-area,
-    .action-buttons {
+    .action-buttons,
+    .floating-actions {
         display: none;
     }
     

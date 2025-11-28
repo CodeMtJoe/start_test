@@ -17,7 +17,46 @@ document.addEventListener('DOMContentLoaded', function() {
     renderClassSelect();
     renderStudentsTable();
     showMessage('系统已加载完成', 'success');
+    
+    // 添加滚动事件监听，用于显示/隐藏浮动操作栏
+    window.addEventListener('scroll', handleScroll);
+    
+    // 初始化浮动操作栏状态
+    updateFloatingActions();
 });
+
+// 滚动事件处理函数
+function handleScroll() {
+    const studentOperations = document.querySelector('.student-operations');
+    const floatingActions = document.getElementById('floatingActions');
+    
+    if (!studentOperations || !floatingActions) return;
+    
+    // 获取操作区域的位置信息
+    const operationsRect = studentOperations.getBoundingClientRect();
+    
+    // 判断操作区域是否被完全遮盖
+    const isOperationsHidden = operationsRect.bottom < 0;
+    
+    // 显示/隐藏浮动操作栏
+    if (isOperationsHidden) {
+        floatingActions.classList.add('visible');
+    } else {
+        floatingActions.classList.remove('visible');
+    }
+}
+
+// 更新浮动操作栏按钮状态
+function updateFloatingActions() {
+    const selectedCount = document.querySelectorAll('.student-checkbox:checked').length;
+    const floatingAddBtn = document.getElementById('floatingSelectedAddBtn');
+    const floatingSubtractBtn = document.getElementById('floatingSelectedSubtractBtn');
+    
+    if (floatingAddBtn && floatingSubtractBtn) {
+        floatingAddBtn.disabled = selectedCount === 0;
+        floatingSubtractBtn.disabled = selectedCount === 0;
+    }
+}
 
 // 数据持久化
 function saveData() {
@@ -626,6 +665,7 @@ function toggleSelectAll() {
     });
     
     updateSelectedButtons();
+    updateFloatingActions(); // 更新浮动操作栏按钮状态
 }
 
 function toggleStudentSelection(checkbox, studentId) {
@@ -645,6 +685,19 @@ function toggleStudentSelection(checkbox, studentId) {
     selectAllCheckbox.indeterminate = checkedCheckboxes.length > 0 && checkedCheckboxes.length < allCheckboxes.length;
     
     updateSelectedButtons();
+    updateFloatingActions(); // 更新浮动操作栏按钮状态
+}
+
+// 行点击选择功能
+function toggleRowSelection(row, studentId) {
+    // 找到当前行的checkbox
+    const checkbox = row.querySelector('.student-checkbox');
+    if (checkbox) {
+        // 切换checkbox状态
+        checkbox.checked = !checkbox.checked;
+        // 调用toggleStudentSelection更新状态
+        toggleStudentSelection(checkbox, studentId);
+    }
 }
 
 function getSelectedStudents() {
@@ -664,6 +717,7 @@ function clearSelection() {
     rows.forEach(row => row.classList.remove('selected'));
     
     updateSelectedButtons();
+    updateFloatingActions(); // 更新浮动操作栏按钮状态
 }
 
 function updateSelectedButtons() {
@@ -673,6 +727,8 @@ function updateSelectedButtons() {
     
     selectedAddBtn.disabled = selectedCount === 0;
     selectedSubtractBtn.disabled = selectedCount === 0;
+    
+    updateFloatingActions(); // 更新浮动操作栏按钮状态
 }
 
 // 搜索和排序功能
@@ -782,14 +838,14 @@ function renderStudentsTable(searchTerm = '', sortBy = 'name') {
         const studentClassName = studentClass ? studentClass.name : '未知班级';
         
         return `
-        <tr class="student-row">
+        <tr class="student-row" onclick="toggleRowSelection(this, '${student.id}')">
             <td>
                 <input type="checkbox" class="student-checkbox" 
                        data-student-id="${student.id}"
                        onchange="toggleStudentSelection(this, '${student.id}')">
             </td>
             <td>
-                <span class="student-name" onclick="copyToClipboard('${student.name}')">
+                <span class="student-name" onclick="event.stopPropagation(); copyToClipboard('${student.name}')">
                     <span class="student-avatar">${student.name.charAt(0)}</span>
                     ${student.name}
                     <i class="fas fa-copy copy-icon" title="点击复制"></i>
@@ -804,16 +860,16 @@ function renderStudentsTable(searchTerm = '', sortBy = 'name') {
             </td>
             <td>
                 <div class="action-buttons">
-                    <button class="btn btn-sm btn-primary" onclick="editStudent('${student.id}')" title="编辑">
+                    <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); editStudent('${student.id}')" title="编辑">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteStudent('${student.id}')" title="删除">
+                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteStudent('${student.id}')" title="删除">
                         <i class="fas fa-trash"></i>
                     </button>
-                    <button class="btn btn-sm btn-success" onclick="addCoinsToStudent('${student.id}')" title="加星币">
+                    <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); addCoinsToStudent('${student.id}')" title="加星币">
                         <i class="fas fa-plus"></i>
                     </button>
-                    <button class="btn btn-sm btn-warning" onclick="subtractCoinsFromStudent('${student.id}')" title="减星币">
+                    <button class="btn btn-sm btn-warning" onclick="event.stopPropagation(); subtractCoinsFromStudent('${student.id}')" title="减星币">
                         <i class="fas fa-minus"></i>
                     </button>
                 </div>
@@ -943,7 +999,7 @@ function selectImportMode(mode) {
         if (mode === 'append') {
             confirmMessage = '您选择了追加模式，将保留现有学生并添加新学生。';
         } else {
-            confirmMessage = '您选择了覆盖模式，将清空当前班级所有学生并导入新数据。\n\n请确认您已做好数据备份！';
+            confirmMessage = '您选择了覆盖模式，将清空所有学生并导入新数据。\n\n请确认您已做好数据备份！';
         }
         
         if (confirm(confirmMessage + '\n\n点击确定继续选择Excel文件。')) {
@@ -1010,7 +1066,7 @@ function handleExcelImport(event) {
                 }
                 
                 // 确定目标班级
-                let targetClassId = currentClass; // 默认使用当前选中的班级
+                let targetClassId;
                 
                 if (className && className.trim() !== '') {
                     // 如果指定了班级，尝试找到对应的班级ID
@@ -1027,6 +1083,14 @@ function handleExcelImport(event) {
                         classes.push(newClass);
                         targetClassId = newClassId;
                     }
+                } else {
+                    // 如果没有指定班级，使用当前选中的班级
+                    if (currentClass === 'all_classes') {
+                        // 在"所有班级"模式下，必须指定班级
+                        errorCount++;
+                        return;
+                    }
+                    targetClassId = currentClass;
                 }
                 
                 // 在追加模式下才检查重名
@@ -1104,25 +1168,35 @@ function executeImport(validData, mode, errorCount) {
     let successMessage = '';
     
     if (mode === 'replace') {
-        // 覆盖模式：先清空当前班级的所有学生
-        const originalStudentCount = students.filter(s => s.classId === currentClass).length;
-        students = students.filter(s => s.classId !== currentClass);
+        // 覆盖模式：清空所有学生
+        const originalStudentCount = students.length;
+        students = [];
         
-        successMessage = `覆盖模式：已清空当前班级 ${originalStudentCount} 名原有学生，`;
+        successMessage = `覆盖模式：已清空所有 ${originalStudentCount} 名原有学生，`;
+        
+        // 覆盖模式下，将导入的学生自动加入到对应的班级中
+        validData.forEach(studentData => {
+            const newStudent = {
+                id: generateId(),
+                name: studentData.name,
+                classId: studentData.classId, // 使用Excel中指定的班级ID
+                coins: studentData.coins
+            };
+            students.push(newStudent);
+        });
     } else {
+        // 追加模式：保持原有逻辑
         successMessage = `追加模式：`;
+        validData.forEach(studentData => {
+            const newStudent = {
+                id: generateId(),
+                name: studentData.name,
+                classId: studentData.classId, // 使用原有班级ID
+                coins: studentData.coins
+            };
+            students.push(newStudent);
+        });
     }
-    
-    // 添加新学生到各自的班级
-    validData.forEach(studentData => {
-        const newStudent = {
-            id: generateId(),
-            name: studentData.name,
-            classId: studentData.classId,
-            coins: studentData.coins
-        };
-        students.push(newStudent);
-    });
     
     // 统计按班级分组的学生数量
     const classCounts = {};
@@ -1179,28 +1253,24 @@ function exportExcel() {
         return;
     }
     
-    // 准备Excel数据
-    const excelData = classStudents.map((student, index) => {
+    // 准备Excel数据（与导入模板格式一致）
+    const excelData = classStudents.map(student => {
         const studentClass = classes.find(cls => cls.id === student.classId);
         return {
-            '序号': index + 1,
             '姓名': student.name,
             '班级': studentClass ? studentClass.name : '未知班级',
-            '星币数量': student.coins,
-            '导出时间': new Date().toLocaleString()
+            '星币数量': student.coins
         };
     });
     
     // 创建工作表
     const worksheet = XLSX.utils.json_to_sheet(excelData);
     
-    // 设置列宽
+    // 设置列宽（与导入模板一致）
     const colWidths = [
-        { wch: 8 },  // 序号
         { wch: 15 }, // 姓名
         { wch: 20 }, // 班级
-        { wch: 12 }, // 星币数量
-        { wch: 20 }  // 导出时间
+        { wch: 12 }  // 星币数量
     ];
     worksheet['!cols'] = colWidths;
     
