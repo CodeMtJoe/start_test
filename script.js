@@ -9,6 +9,15 @@ let batchOperation = null;
 let pendingExcelData = null;
 let selectedImportMode = null;
 
+// API配置相关
+let apiConfig = {
+    apiUrl: 'http://localhost:3000/api/starGrant/activeGrant',
+    queryApiUrl: 'http://localhost:3000/api/stuStar/queryList',
+    apiKey: '',
+    eduCampusId: 113,
+    syncMode: 'all'
+};
+
 // 初始化系统
 document.addEventListener('DOMContentLoaded', function() {
     loadData();
@@ -23,7 +32,108 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化浮动操作栏状态
     updateFloatingActions();
+    
+    // 加载API配置
+    loadApiConfig();
 });
+
+// API配置相关函数
+function loadApiConfig() {
+    const savedConfig = localStorage.getItem('apiConfig');
+    if (savedConfig) {
+        try {
+            apiConfig = JSON.parse(savedConfig);
+        } catch (error) {
+            console.error('API配置加载失败:', error);
+            showMessage('API配置加载失败，使用默认配置', 'warning');
+        }
+    }
+}
+
+function saveApiConfig() {
+    const apiUrl = document.getElementById('apiUrl').value.trim();
+    const queryApiUrl = document.getElementById('queryApiUrl').value.trim();
+    const apiKey = document.getElementById('apiKey').value.trim();
+    const eduCampusId = parseInt(document.getElementById('eduCampusId').value);
+    const syncMode = document.getElementById('syncMode').value;
+    
+    if (!apiUrl) {
+        showMessage('请输入增加星币API地址', 'warning');
+        return;
+    }
+    
+    if (!queryApiUrl) {
+        showMessage('请输入查询学生ID API地址', 'warning');
+        return;
+    }
+    
+    if (!apiKey) {
+        showMessage('请输入API密钥', 'warning');
+        return;
+    }
+    
+    apiConfig = {
+        apiUrl: apiUrl,
+        queryApiUrl: queryApiUrl,
+        apiKey: apiKey,
+        eduCampusId: eduCampusId,
+        syncMode: syncMode
+    };
+    
+    localStorage.setItem('apiConfig', JSON.stringify(apiConfig));
+    showMessage('API配置保存成功', 'success');
+    closeApiConfigModal();
+}
+
+function showApiConfigModal() {
+    // 填充表单
+    document.getElementById('apiUrl').value = apiConfig.apiUrl;
+    document.getElementById('queryApiUrl').value = apiConfig.queryApiUrl;
+    document.getElementById('apiKey').value = apiConfig.apiKey;
+    document.getElementById('eduCampusId').value = apiConfig.eduCampusId;
+    document.getElementById('syncMode').value = apiConfig.syncMode;
+    
+    document.getElementById('apiConfigModal').style.display = 'block';
+}
+
+function closeApiConfigModal() {
+    document.getElementById('apiConfigModal').style.display = 'none';
+}
+
+function showSyncModal() {
+    // 更新同步学生数量
+    const selectedCount = document.querySelectorAll('.student-checkbox:checked').length;
+    const currentClassCount = students.filter(s => s.classId === currentClass).length;
+    const totalCount = students.length;
+    
+    document.getElementById('syncCount').textContent = totalCount;
+    
+    // 根据同步模式更新数量
+    document.querySelectorAll('input[name="syncOption"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            let count = 0;
+            if (this.value === 'all') {
+                count = totalCount;
+            } else if (this.value === 'current') {
+                count = currentClassCount;
+            } else if (this.value === 'selected') {
+                count = selectedCount;
+            }
+            document.getElementById('syncCount').textContent = count;
+        });
+    });
+    
+    document.getElementById('syncModal').style.display = 'block';
+}
+
+function closeSyncModal() {
+    document.getElementById('syncModal').style.display = 'none';
+    // 重置进度和结果
+    document.getElementById('syncProgress').style.display = 'none';
+    document.getElementById('syncResult').style.display = 'none';
+    document.getElementById('syncResult').innerHTML = '';
+    document.getElementById('syncResult').className = '';
+}
 
 // 滚动事件处理函数
 function handleScroll() {
@@ -56,6 +166,190 @@ function updateFloatingActions() {
         floatingAddBtn.disabled = selectedCount === 0;
         floatingSubtractBtn.disabled = selectedCount === 0;
     }
+}
+
+// 同步功能相关函数
+async function executeSync() {
+    // 检查API配置
+    if (!apiConfig.apiUrl || !apiConfig.apiKey) {
+        showMessage('请先配置API信息', 'warning');
+        closeSyncModal();
+        showApiConfigModal();
+        return;
+    }
+    
+    // 获取同步选项
+    const syncOption = document.querySelector('input[name="syncOption"]:checked').value;
+    
+    // 获取要同步的学生数据
+    let syncStudents = [];
+    if (syncOption === 'all') {
+        syncStudents = students;
+    } else if (syncOption === 'current') {
+        syncStudents = students.filter(s => s.classId === currentClass);
+    } else if (syncOption === 'selected') {
+        const selectedIds = Array.from(document.querySelectorAll('.student-checkbox:checked')).map(cb => cb.dataset.studentId);
+        syncStudents = students.filter(s => selectedIds.includes(s.id));
+    }
+    
+    if (syncStudents.length === 0) {
+        showMessage('没有学生需要同步', 'warning');
+        return;
+    }
+    
+    // 显示进度条
+    const syncProgress = document.getElementById('syncProgress');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const syncResult = document.getElementById('syncResult');
+    
+    syncProgress.style.display = 'block';
+    syncResult.style.display = 'none';
+    
+    // 初始化进度
+    let successCount = 0;
+    let errorCount = 0;
+    const totalCount = syncStudents.length;
+    
+    // 同步学生数据
+    for (let i = 0; i < totalCount; i++) {
+        const student = syncStudents[i];
+        
+        try {
+            await syncStudentToApi(student);
+            successCount++;
+        } catch (error) {
+            console.error(`同步学生 ${student.name} 失败:`, error);
+            errorCount++;
+        }
+        
+        // 更新进度
+        const progress = Math.round((i + 1) / totalCount * 100);
+        progressFill.style.width = `${progress}%`;
+        progressText.textContent = `${progress}%`;
+    }
+    
+    // 显示同步结果
+    syncResult.style.display = 'block';
+    if (errorCount === 0) {
+        syncResult.className = 'success';
+        syncResult.innerHTML = `<i class="fas fa-check-circle"></i> 同步成功！已成功同步 ${successCount} 名学生的星币数据`;
+        showMessage(`同步成功！已成功同步 ${successCount} 名学生的星币数据`, 'success');
+    } else if (successCount === 0) {
+        syncResult.className = 'error';
+        syncResult.innerHTML = `<i class="fas fa-times-circle"></i> 同步失败！${errorCount} 名学生同步失败`;
+        showMessage(`同步失败！${errorCount} 名学生同步失败`, 'error');
+    } else {
+        syncResult.className = 'warning';
+        syncResult.innerHTML = `<i class="fas fa-exclamation-triangle"></i> 部分同步成功！成功 ${successCount} 名，失败 ${errorCount} 名`;
+        showMessage(`部分同步成功！成功 ${successCount} 名，失败 ${errorCount} 名`, 'warning');
+    }
+}
+
+// 查询学生ID
+async function queryStudentId(studentName) {
+    // 准备请求数据
+    const requestData = {
+        "eduCampusId": apiConfig.eduCampusId,
+        "stuName": studentName,
+        "className": "",
+        "userId": "",
+        "pageRequest": {
+            "pageNum": 1,
+            "pageSize": 10
+        }
+    };
+    
+    // 准备请求头
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `${apiConfig.apiKey}`
+    };
+    
+    // 添加t参数（Unix时间戳，毫秒）
+    const timestamp = Date.now();
+    const separator = apiConfig.queryApiUrl.includes('?') ? '&' : '?';
+    const apiUrlWithTimestamp = `${apiConfig.queryApiUrl}${separator}t=${timestamp}`;
+    
+    // 发送请求，添加credentials和mode配置以处理CORS
+    const response = await fetch(apiUrlWithTimestamp, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(requestData),
+        credentials: 'omit', // 不发送凭据
+        mode: 'cors' // 允许跨域请求
+    });
+    
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`查询学生ID失败: ${response.status} ${errorText}`);
+    }
+    
+    const result = await response.json();
+    if (result.success && result.content && result.content.content && result.content.content.length > 0) {
+        return result.content.content[0].stuId;
+    } else {
+        throw new Error(`未找到学生 ${studentName} 的ID`);
+    }
+}
+
+// 增加学生星币
+async function addStudentCoins(stuIdList, starNum) {
+    // 准备请求数据
+    const requestData = {
+        "eduCampusId": apiConfig.eduCampusId,
+        "stuIdList": stuIdList,
+        "starNum": starNum,
+        "remark": "",
+        "type": 1
+    };
+    
+    // 准备请求头
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `${apiConfig.apiKey}`
+    };
+    
+    // 添加t参数（Unix时间戳，毫秒）
+    const timestamp = Date.now();
+    const separator = apiConfig.apiUrl.includes('?') ? '&' : '?';
+    const apiUrlWithTimestamp = `${apiConfig.apiUrl}${separator}t=${timestamp}`;
+    
+    // 发送请求，添加credentials和mode配置以处理CORS
+    const response = await fetch(apiUrlWithTimestamp, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(requestData),
+        credentials: 'omit', // 不发送凭据
+        mode: 'cors' // 允许跨域请求
+    });
+    
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`增加星币失败: ${response.status} ${errorText}`);
+    }
+    
+    const result = await response.json();
+    if (result.success) {
+        return result;
+    } else {
+        throw new Error(`增加星币失败: ${result.error || '未知错误'}`);
+    }
+}
+
+// 单个学生同步到API
+async function syncStudentToApi(student) {
+    // 1. 查询学生ID
+    const stuId = await queryStudentId(student.name);
+    
+    // 2. 增加星币
+    await addStudentCoins([stuId], student.coins);
+    
+    return {
+        studentName: student.name,
+        stuId: stuId,
+        coins: student.coins
+    };
 }
 
 // 数据持久化

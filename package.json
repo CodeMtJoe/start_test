@@ -1,0 +1,16 @@
+{
+  "name": "star-coin-proxy",
+  "version": "1.0.0",
+  "description": "星币管理系统代理服务器，用于绕开CORS拦截",
+  "main": "proxy.js",
+  "scripts": {
+    "start": "node proxy.js",
+    "dev": "node proxy.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "http-proxy-middleware": "^2.0.6"
+  },
+  "author": "",
+  "license": "MIT"
+}

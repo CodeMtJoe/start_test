@@ -23,6 +23,12 @@
                 <button class="btn btn-secondary" onclick="downloadTemplate()">
                     <i class="fas fa-download"></i> 下载模板
                 </button>
+                <button class="btn btn-primary" onclick="showSyncModal()">
+                    <i class="fas fa-sync-alt"></i> 同步到编程网站
+                </button>
+                <button class="btn btn-info" onclick="showApiConfigModal()">
+                    <i class="fas fa-cog"></i> API配置
+                </button>
             </div>
         </header>
 
@@ -277,6 +283,86 @@
 
     <!-- 隐藏的文件输入 -->
     <input type="file" id="excelFileInput" accept=".xlsx,.xls" style="display: none;" onchange="handleExcelImport(event)">
+
+    <!-- API配置模态框 -->
+    <div id="apiConfigModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>API配置</h3>
+                <span class="close" onclick="closeApiConfigModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="apiUrl">增加星币API地址：</label>
+                    <input type="url" id="apiUrl" placeholder="https://steam.fun/java-api/points/sch/starGrant/activeGrant" required>
+                </div>
+                <div class="form-group">
+                    <label for="queryApiUrl">查询学生ID API地址：</label>
+                    <input type="url" id="queryApiUrl" placeholder="https://steam.fun/java-api/points/sch/stuStar/queryList" required>
+                </div>
+                <div class="form-group">
+                    <label for="apiKey">API密钥：</label>
+                    <input type="text" id="apiKey" placeholder="输入API密钥" required>
+                </div>
+                <div class="form-group">
+                    <label for="eduCampusId">校园ID：</label>
+                    <input type="number" id="eduCampusId" placeholder="输入校园ID" value="113" required>
+                </div>
+                <div class="form-group">
+                    <label for="syncMode">同步模式：</label>
+                    <select id="syncMode">
+                        <option value="all">同步所有学生</option>
+                        <option value="current">同步当前班级</option>
+                        <option value="selected">同步选中学生</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeApiConfigModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveApiConfig()">保存配置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 同步模态框 -->
+    <div id="syncModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>同步星币到编程网站</h3>
+                <span class="close" onclick="closeSyncModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="sync-info">
+                    <p>即将同步 <span id="syncCount">0</span> 名学生的星币数据到编程网站</p>
+                    <div class="sync-options">
+                        <label>
+                            <input type="radio" name="syncOption" value="all" checked>
+                            <span>同步所有学生</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="syncOption" value="current">
+                            <span>同步当前班级</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="syncOption" value="selected">
+                            <span>同步选中学生</span>
+                        </label>
+                    </div>
+                </div>
+                <div id="syncProgress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">0%</div>
+                </div>
+                <div id="syncResult" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSyncModal()">取消</button>
+                <button class="btn btn-primary" onclick="executeSync()">开始同步</button>
+            </div>
+        </div>
+    </div>
 
     <!-- 浮动操作栏 -->
     <div class="floating-actions" id="floatingActions">

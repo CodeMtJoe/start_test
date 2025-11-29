@@ -989,6 +989,134 @@ tbody tr:last-child td {
     font-weight: 500;
 }
 
+/* API配置样式 */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 14px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+    background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+/* 同步信息样式 */
+.sync-info {
+    margin-bottom: 20px;
+}
+
+.sync-info p {
+    font-size: 16px;
+    color: #4a5568;
+    margin-bottom: 15px;
+}
+
+.sync-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sync-options label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    line-height: 1.4;
+}
+
+.sync-options label:hover {
+    background-color: #f8f9fa;
+    border-color: #3498db;
+}
+
+.sync-options input[type="radio"] {
+    margin: 0;
+    min-width: 16px;
+}
+
+/* 进度条样式 */
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.progress-text {
+    text-align: center;
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* 同步结果样式 */
+#syncResult {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+#syncResult.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+#syncResult.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+#syncResult.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
     .floating-actions {
@@ -1002,6 +1130,15 @@ tbody tr:last-child td {
     
     .btn-floating .btn-text {
         font-size: 13px;
+    }
+    
+    .sync-options {
+        gap: 8px;
+    }
+    
+    .sync-options label {
+        padding: 10px;
+        font-size: 14px;
     }
 }
 
