@@ -210,6 +210,7 @@ async function executeSync() {
     let successCount = 0;
     let errorCount = 0;
     const totalCount = syncStudents.length;
+    const successStudents = []; // 记录同步成功的学生
     
     // 同步学生数据
     for (let i = 0; i < totalCount; i++) {
@@ -218,6 +219,7 @@ async function executeSync() {
         try {
             await syncStudentToApi(student);
             successCount++;
+            successStudents.push(student); // 将同步成功的学生添加到数组中
         } catch (error) {
             console.error(`同步学生 ${student.name} 失败:`, error);
             errorCount++;
@@ -227,6 +229,20 @@ async function executeSync() {
         const progress = Math.round((i + 1) / totalCount * 100);
         progressFill.style.width = `${progress}%`;
         progressText.textContent = `${progress}%`;
+    }
+    
+    // 如果有同步成功的学生，将他们的星币重置为0
+    if (successStudents.length > 0) {
+        successStudents.forEach(student => {
+            student.coins = 0; // 将星币重置为0
+        });
+        
+        // 保存更新后的数据
+        saveData();
+        // 更新统计信息
+        updateStats();
+        // 重新渲染学生表格
+        renderStudentsTable();
     }
     
     // 显示同步结果
