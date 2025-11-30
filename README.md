@@ -22,13 +22,15 @@
 
 ## 快速开始
 
-### 1. 安装代理服务器依赖
+### 方式一：传统方式启动
+
+#### 1. 安装代理服务器依赖
 
 ```bash
 npm install
 ```
 
-### 2. 启动代理服务器
+#### 2. 启动代理服务器
 
 ```bash
 node proxy.js
@@ -36,7 +38,7 @@ node proxy.js
 
 代理服务器将在端口3000上运行，用于转发API请求，绕开浏览器的CORS拦截。
 
-### 3. 启动前端服务器
+#### 3. 启动前端服务器
 
 在另一个终端窗口中运行：
 
@@ -46,12 +48,52 @@ python -m http.server 8000
 
 前端服务器将在端口8000上运行。
 
-### 4. 访问应用
+#### 4. 访问应用
 
 在浏览器中访问：
 
 ```
 http://localhost:8000
+```
+
+### 方式二：Docker一键启动
+
+#### 1. 安装Docker
+
+请确保您的系统已安装Docker和Docker Compose。
+
+#### 2. 构建并启动服务
+
+在项目根目录运行：
+
+```bash
+docker-compose up -d
+```
+
+#### 3. 访问应用
+
+在浏览器中访问：
+
+```
+http://localhost
+```
+
+#### 4. 停止服务
+
+```bash
+docker-compose down
+```
+
+#### 5. 查看日志
+
+```bash
+docker-compose logs
+```
+
+#### 6. 重新构建镜像
+
+```bash
+docker-compose up -d --build
 ```
 
 ## API配置

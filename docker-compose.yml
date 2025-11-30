@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # 前端服务
+  frontend:
+    build: .
+    container_name: star-coin-frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html
+      - ./script.js:/usr/share/nginx/html/script.js
+      - ./styles.css:/usr/share/nginx/html/styles.css
+    restart: unless-stopped
+    networks:
+      - star-coin-network
+
+  # 代理服务
+  proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.proxy
+    container_name: star-coin-proxy
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./proxy.js:/app/proxy.js
+      - ./package.json:/app/package.json
+      - ./package-lock.json:/app/package-lock.json
+    restart: unless-stopped
+    networks:
+      - star-coin-network
+
+networks:
+  star-coin-network:
+    driver: bridge
