@@ -108,8 +108,26 @@ function showSyncModal() {
     
     document.getElementById('syncCount').textContent = totalCount;
     
+    // 加载上次的同步模式选择
+    const savedSyncOption = localStorage.getItem('syncOption');
+    
     // 根据同步模式更新数量
     document.querySelectorAll('input[name="syncOption"]').forEach(radio => {
+        // 设置上次的选择
+        if (savedSyncOption && radio.value === savedSyncOption) {
+            radio.checked = true;
+            // 更新显示的数量
+            let count = 0;
+            if (radio.value === 'all') {
+                count = totalCount;
+            } else if (radio.value === 'current') {
+                count = currentClassCount;
+            } else if (radio.value === 'selected') {
+                count = selectedCount;
+            }
+            document.getElementById('syncCount').textContent = count;
+        }
+        
         radio.addEventListener('change', function() {
             let count = 0;
             if (this.value === 'all') {
@@ -120,6 +138,9 @@ function showSyncModal() {
                 count = selectedCount;
             }
             document.getElementById('syncCount').textContent = count;
+            
+            // 保存选择状态到LocalStorage
+            localStorage.setItem('syncOption', this.value);
         });
     });
     
@@ -192,10 +213,22 @@ async function executeSync() {
         syncStudents = students.filter(s => selectedIds.includes(s.id));
     }
     
-    if (syncStudents.length === 0) {
-        showMessage('没有学生需要同步', 'warning');
+    // 过滤掉星币数量为0的学生
+    const filteredStudents = syncStudents.filter(student => student.coins > 0);
+    const zeroCoinStudents = syncStudents.filter(student => student.coins === 0);
+    
+    // 记录被过滤的学生信息
+    if (zeroCoinStudents.length > 0) {
+        console.log('过滤掉星币数量为0的学生:', zeroCoinStudents.map(s => s.name));
+    }
+    
+    if (filteredStudents.length === 0) {
+        showMessage('没有星币数量大于0的学生需要同步', 'warning');
         return;
     }
+    
+    // 使用过滤后的学生列表
+    syncStudents = filteredStudents;
     
     // 显示进度条
     const syncProgress = document.getElementById('syncProgress');
