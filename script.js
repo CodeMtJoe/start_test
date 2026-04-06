@@ -213,8 +213,8 @@ async function executeSync() {
         syncStudents = students.filter(s => selectedIds.includes(s.id));
     }
     
-    // 过滤掉星币数量为0的学生
-    const filteredStudents = syncStudents.filter(student => student.coins > 0);
+    // 过滤掉星币数量为0的学生（保留正数和负数）
+    const filteredStudents = syncStudents.filter(student => student.coins !== 0);
     const zeroCoinStudents = syncStudents.filter(student => student.coins === 0);
     
     // 记录被过滤的学生信息
@@ -223,7 +223,7 @@ async function executeSync() {
     }
     
     if (filteredStudents.length === 0) {
-        showMessage('没有星币数量大于0的学生需要同步', 'warning');
+        showMessage('没有星币数量不为0的学生需要同步', 'warning');
         return;
     }
     
@@ -342,7 +342,7 @@ async function queryStudentId(studentName) {
     }
 }
 
-// 增加学生星币
+// 增加/减少学生星币
 async function addStudentCoins(stuIdList, starNum) {
     // 准备请求数据
     const requestData = {
